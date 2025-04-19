@@ -254,11 +254,11 @@ def main():
             """
         else:
             app_description = """
-            <div style="padding: 1rem; background-color: #F5F5F5; border-radius: 8px;">
-                <p>This Symptom Checker uses a comprehensive symptom database to analyze your symptoms and 
-                provide potential health conditions, advice, and diet recommendations.</p>
+            <div style="padding: 1rem; background-color: #E3F2FD; border-radius: 8px;">
+                <p>This Symptom Checker uses <strong>Google's Gemini AI or a Backend Model</strong> to analyze your symptoms and 
+                provide potential health conditions, advice, and diet recommendations.
                 
-                <p style="margin-top: 0.5rem;"><em>Remember that this tool does not replace professional medical advice.</em></p>
+                Remember that this tool does not replace professional medical advice.</p>
             </div>
             """
 
