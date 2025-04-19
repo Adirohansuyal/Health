@@ -278,7 +278,7 @@ def main():
                       text-decoration: none; border-radius: 4px;
                       text-align: center; width: 100%;
                       font-weight: bold; margin: 0.5rem 0;">
-                Connect with Developer 🔗
+                Connect with Developer 
             </a>
             """, 
             unsafe_allow_html=True)
