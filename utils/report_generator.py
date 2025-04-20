@@ -266,7 +266,7 @@ def generate_html_report(analysis, symptoms, user_data):
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                    <span class="app-name">AI Health Advisor - Medical Report</span>
+                    <span class="app-name"> Birla AI Health Advisor - Medical Report</span>
                     <h1>Symptom Analysis Report</h1>
                     <h2>Patient: {{ user_data.patient_name }}</h2>
                     <p class="report-date">Generated on {{ report_date }}</p>
