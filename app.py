@@ -19,7 +19,10 @@ from utils.ui_helpers import (local_css, display_header,
 from utils.report_generator import generate_html_report, generate_pdf_report, generate_qr_code
 
 # Try to use Gemini if API key is available, otherwise fall back to local analyzer
-if os.environ.get("GOOGLE_API_KEY"):
+# Hardcoding the API key directly
+GOOGLE_API_KEY = "AIzaSyBBS8DvKeec-Vcq8kjb_ViwdEGKHWZecqc"  # Replace with your actual API key
+
+if GOOGLE_API_KEY:
     from utils.gemini_helper import analyze_symptoms, get_symptom_conversation
     USING_AI = True
 else:
