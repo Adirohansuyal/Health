@@ -19,10 +19,7 @@ from utils.ui_helpers import (local_css, display_header,
 from utils.report_generator import generate_html_report, generate_pdf_report, generate_qr_code
 
 # Try to use Gemini if API key is available, otherwise fall back to local analyzer
-# Hardcoding the API key directly
-GOOGLE_API_KEY = "AIzaSyBBS8DvKeec-Vcq8kjb_ViwdEGKHWZecqc"  # Replace with your actual API key
-
-if GOOGLE_API_KEY:
+if os.environ.get("GOOGLE_API_KEY"):
     from utils.gemini_helper import analyze_symptoms, get_symptom_conversation
     USING_AI = True
 else:
@@ -257,11 +254,11 @@ def main():
             """
         else:
             app_description = """
-            <div style="padding: 1rem; background-color: #E3F2FD; border-radius: 8px;">
-                <p>This Symptom Checker uses <strong>Google's Gemini AI or a Backend Model</strong> to analyze your symptoms and 
-                provide potential health conditions, advice, and diet recommendations.
+            <div style="padding: 1rem; background-color: #F5F5F5; border-radius: 8px;">
+                <p>This Symptom Checker uses a comprehensive symptom database to analyze your symptoms and 
+                provide potential health conditions, advice, and diet recommendations.</p>
                 
-                Remember that this tool does not replace professional medical advice.</p>
+                <p style="margin-top: 0.5rem;"><em>Remember that this tool does not replace professional medical advice.</em></p>
             </div>
             """
 
@@ -281,7 +278,7 @@ def main():
                       text-decoration: none; border-radius: 4px;
                       text-align: center; width: 100%;
                       font-weight: bold; margin: 0.5rem 0;">
-                Connect with Developer 
+                Connect with Developer 🔗
             </a>
             """, 
             unsafe_allow_html=True)
