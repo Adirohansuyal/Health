@@ -18,8 +18,10 @@ from utils.ui_helpers import (local_css, display_header,
 # Import report generator
 from utils.report_generator import generate_html_report, generate_pdf_report, generate_qr_code
 
-# Try to use Gemini if API key is available, otherwise fall back to local analyzer
-if os.environ.get("GOOGLE_API_KEY"):
+# Replace with your actual valid API key
+GOOGLE_API_KEY = "your_actual_api_key"
+
+if GOOGLE_API_KEY:
     from utils.gemini_helper import analyze_symptoms, get_symptom_conversation
     USING_AI = True
 else:
@@ -48,140 +50,137 @@ def main():
         # Medical disclaimer
         display_medical_disclaimer(expanded=True)
 
-        # Sidebar for user information input with improved layout
-        st.sidebar.markdown("""
+        # Patient information section (moved from sidebar)
+        st.markdown("""
         <div style="text-align: center; margin-bottom: 1rem;">
             <h2 style="color: #1E88E5;">Patient Information</h2>
             <p style="color: #666;">Please provide your details below</p>
         </div>
         """,
-                            unsafe_allow_html=True)
-
-        # Two-column layout in sidebar
-        with st.sidebar:
-            # User information form with improved design
-            with st.form("user_info_form"):
-                # User details section
-                st.markdown(
-                    '<div style="background-color: #F5F5F5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">',
                     unsafe_allow_html=True)
 
-                # Patient name
-                patient_name = st.text_input(
-                    "Patient Name", placeholder="Enter your full name")
+        # User information form
+        with st.form("user_info_form"):
+            # User details section
+            st.markdown(
+                '<div style="background-color: #F5F5F5; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">',
+                unsafe_allow_html=True)
+
+            # Patient name
+            patient_name = st.text_input("Patient Name",
+                                         placeholder="Enter your full name")
+            # Store in session state for report
+            st.session_state.patient_name = patient_name
+
+            # Basic info in columns
+            col1, col2 = st.columns(2)
+            with col1:
+                age = st.number_input("Age",
+                                      min_value=1,
+                                      max_value=120,
+                                      value=30)
                 # Store in session state for report
-                st.session_state.patient_name = patient_name
+                st.session_state.age = age
+            with col2:
+                gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+                # Store in session state for report
+                st.session_state.gender = gender
 
-                # Basic info in columns
-                col1, col2 = st.columns(2)
-                with col1:
-                    age = st.number_input("Age",
-                                          min_value=1,
-                                          max_value=120,
-                                          value=30)
-                    # Store in session state for report
-                    st.session_state.age = age
-                with col2:
-                    gender = st.selectbox("Gender",
-                                          ["Male", "Female", "Other"])
-                    # Store in session state for report
-                    st.session_state.gender = gender
+            # Image upload
+            uploaded_image = st.file_uploader("Upload Patient Photo",
+                                              type=['png', 'jpg', 'jpeg'])
+            if uploaded_image is not None:
+                # Display the uploaded image
+                st.image(uploaded_image, width=200)
+                # Convert image to base64 for storage
+                image_bytes = uploaded_image.getvalue()
+                image_b64 = base64.b64encode(image_bytes).decode()
+                st.session_state.patient_image = image_b64
 
-                # Image upload
-                uploaded_image = st.file_uploader("Upload Patient Photo",
-                                                  type=['png', 'jpg', 'jpeg'])
-                if uploaded_image is not None:
-                    # Display the uploaded image
-                    st.image(uploaded_image, width=200)
-                    # Convert image to base64 for storage
-                    image_bytes = uploaded_image.getvalue()
-                    image_b64 = base64.b64encode(image_bytes).decode()
-                    st.session_state.patient_image = image_b64
+            st.markdown('</div>', unsafe_allow_html=True)
 
-                st.markdown('</div>', unsafe_allow_html=True)
+            # Symptom selection section
+            st.markdown("""
+            <div style="margin: 1rem 0;">
+                <h3 style="color: #1E88E5; margin-bottom: 0.5rem;">Symptoms</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Select all that apply</p>
+            </div>
+            """,
+                        unsafe_allow_html=True)
 
-                # Symptom selection
+            # Organize symptoms by body system
+            system_tabs = st.tabs(list(BODY_SYSTEMS.keys()))
+
+            # Create a master list to store all selected symptoms
+            if 'all_selected_symptoms' not in st.session_state:
+                st.session_state.all_selected_symptoms = []
+
+            # For each body system, display relevant symptoms
+            for i, (system, symptoms) in enumerate(BODY_SYSTEMS.items()):
+                with system_tabs[i]:
+                    # Select symptoms for this system
+                    system_symptoms = st.multiselect(
+                        f"Select {system.lower()} symptoms",
+                        options=symptoms,
+                        default=[])
+
+                    # Update master list
+                    for symptom in system_symptoms:
+                        if symptom not in st.session_state.all_selected_symptoms:
+                            st.session_state.all_selected_symptoms.append(
+                                symptom)
+
+            # Display currently selected symptoms
+            if st.session_state.all_selected_symptoms:
                 st.markdown("""
                 <div style="margin: 1rem 0;">
-                    <h3 style="color: #1E88E5; margin-bottom: 0.5rem;">Symptoms</h3>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Select all that apply</p>
+                    <h4 style="color: #1E88E5;">Currently Selected:</h4>
                 </div>
                 """,
                             unsafe_allow_html=True)
 
-                # Organize symptoms by body system
-                system_tabs = st.tabs(list(BODY_SYSTEMS.keys()))
+                for symptom in st.session_state.all_selected_symptoms:
+                    st.markdown(
+                        f"<div style='padding: 0.3rem 0.8rem; background-color: #E3F2FD; border-radius: 20px; margin-bottom: 0.5rem; display: inline-block; margin-right: 0.5rem;'>{symptom}</div>",
+                        unsafe_allow_html=True)
 
-                # Create a master list to store all selected symptoms
-                if 'all_selected_symptoms' not in st.session_state:
-                    st.session_state.all_selected_symptoms = []
+            # Custom symptoms input
+            st.markdown("<div style='margin: 1rem 0;'>",
+                        unsafe_allow_html=True)
+            custom_symptoms = st.text_input(
+                "Add other symptoms (comma-separated)")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-                # For each body system, display relevant symptoms
-                for i, (system, symptoms) in enumerate(BODY_SYSTEMS.items()):
-                    with system_tabs[i]:
-                        # Select symptoms for this system
-                        system_symptoms = st.multiselect(
-                            f"Select {system.lower()} symptoms",
-                            options=symptoms,
-                            default=[])
+            # Additional details section
+            st.markdown("""
+            <div style="margin: 1rem 0;">
+                <h3 style="color: #1E88E5; margin-bottom: 0.5rem;">Additional Details</h3>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Help us understand your condition better</p>
+            </div>
+            """,
+                        unsafe_allow_html=True)
 
-                        # Update master list
-                        for symptom in system_symptoms:
-                            if symptom not in st.session_state.all_selected_symptoms:
-                                st.session_state.all_selected_symptoms.append(
-                                    symptom)
-
-                # Display currently selected symptoms
-                if st.session_state.all_selected_symptoms:
-                    st.markdown("""
-                    <div style="margin: 1rem 0;">
-                        <h4 style="color: #1E88E5;">Currently Selected:</h4>
-                    </div>
-                    """,
-                                unsafe_allow_html=True)
-
-                    for symptom in st.session_state.all_selected_symptoms:
-                        st.markdown(
-                            f"<div style='padding: 0.3rem 0.8rem; background-color: #E3F2FD; border-radius: 20px; margin-bottom: 0.5rem; display: inline-block; margin-right: 0.5rem;'>{symptom}</div>",
-                            unsafe_allow_html=True)
-
-                # Custom symptoms input
-                st.markdown("<div style='margin: 1rem 0;'>",
-                            unsafe_allow_html=True)
-                custom_symptoms = st.text_input(
-                    "Add other symptoms (comma-separated)")
-                st.markdown("</div>", unsafe_allow_html=True)
-
-                # Additional details
-                st.markdown("""
-                <div style="margin: 1rem 0;">
-                    <h3 style="color: #1E88E5; margin-bottom: 0.5rem;">Additional Details</h3>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Help us understand your condition better</p>
-                </div>
-                """,
-                            unsafe_allow_html=True)
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    duration = st.selectbox("Duration", SYMPTOM_DURATION)
-                    # Store in session state for report
-                    st.session_state.duration = duration
-                with col2:
-                    severity = st.selectbox("Severity", SYMPTOM_SEVERITY)
-                    # Store in session state for report
-                    st.session_state.severity = severity
-
-                # Additional information
-                additional_info = st.text_area(
-                    "Medical History, Allergies, etc.", height=100)
+            col1, col2 = st.columns(2)
+            with col1:
+                duration = st.selectbox("Duration", SYMPTOM_DURATION)
                 # Store in session state for report
-                st.session_state.additional_info = additional_info
+                st.session_state.duration = duration
+            with col2:
+                severity = st.selectbox("Severity", SYMPTOM_SEVERITY)
+                # Store in session state for report
+                st.session_state.severity = severity
 
-                # Submit button with improved styling
-                st.markdown("<div style='margin-top: 2rem;'>",
-                            unsafe_allow_html=True)
-                submit_button = st.form_submit_button("Analyze Symptoms")
-                st.markdown("</div>", unsafe_allow_html=True)
+            # Additional information
+            additional_info = st.text_area("Medical History, Allergies, etc.",
+                                           height=100)
+            # Store in session state for report
+            st.session_state.additional_info = additional_info
+
+            # Submit button
+            st.markdown("<div style='margin-top: 2rem;'>",
+                        unsafe_allow_html=True)
+            submit_button = st.form_submit_button("Analyze Symptoms")
+            st.markdown("</div>", unsafe_allow_html=True)
 
         # Process user input when the form is submitted
         if submit_button:
@@ -234,54 +233,44 @@ def main():
             # Display results
             display_results(analysis_result, all_symptoms)
 
-        # Information section about the app
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("""
+        # About this App section (moved from sidebar)
+        st.markdown("---")
+        st.markdown("""
         <div style="text-align: center; margin-bottom: 1rem;">
             <h3 style="color: #1E88E5;">About this App</h3>
         </div>
         """,
-                            unsafe_allow_html=True)
+                    unsafe_allow_html=True)
 
-        if USING_AI:
-            app_description = """
-            <div style="padding: 1rem; background-color: #E3F2FD; border-radius: 8px;">
-                <p>This Symptom Checker uses <strong>Google's Gemini AI or a Backend Model</strong> to analyze your symptoms and 
-                provide potential health conditions, advice, and diet recommendations.
-                
-                Remember that this tool does not replace professional medical advice.</p>
-            </div>
-            """
-        else:
-            app_description = """
-            <div style="padding: 1rem; background-color: #F5F5F5; border-radius: 8px;">
-                <p>This Symptom Checker uses a comprehensive symptom database to analyze your symptoms and 
-                provide potential health conditions, advice, and diet recommendations.</p>
-                
-                <p style="margin-top: 0.5rem;"><em>Remember that this tool does not replace professional medical advice.</em></p>
-            </div>
-            """
+        app_description = """
+        <div style="padding: 1rem; background-color: #E3F2FD; border-radius: 8px;">
+            <p>This Symptom Checker uses <strong>Google's Gemini AI or a Backend Model</strong> to analyze your symptoms and 
+            provide potential health conditions, advice, and diet recommendations.
 
-        st.sidebar.markdown(app_description, unsafe_allow_html=True)
-        
-        # Meet the Developers section
-        st.sidebar.markdown("""
+            Remember that this tool does not replace professional medical advice.</p>
+        </div>
+        """
+        st.markdown(app_description, unsafe_allow_html=True)
+
+        # Meet the Developer section (moved from sidebar)
+        st.markdown("""
         <div style="text-align: center; margin-top: 1rem;">
             <h3 style="color: #1E88E5;">Meet the Developer</h3>
         </div>
-        """, unsafe_allow_html=True)
-        
-        st.sidebar.markdown("""
+        """,
+                    unsafe_allow_html=True)
+
+        st.markdown("""
             <a href="https://www.linkedin.com/in/aditya-suyal/" target="_blank" 
                style="display: inline-block; padding: 0.5rem 1rem; 
                       background-color: #0077B5; color: white; 
                       text-decoration: none; border-radius: 4px;
                       text-align: center; width: 100%;
                       font-weight: bold; margin: 0.5rem 0;">
-                Connect with Developer 🔗
+                Connect with Developer 
             </a>
-            """, 
-            unsafe_allow_html=True)
+            """,
+                    unsafe_allow_html=True)
 
         # Footer
         display_footer()
@@ -417,25 +406,32 @@ def display_results(analysis, symptoms):
 
             # Get a conversational response about the symptoms
             if len(symptoms) > 0:
-                ai_response = get_symptom_conversation(
-                    symptoms, st.session_state.conversation)
+                try:
+                    # Call the AI assistant
+                    ai_response = get_symptom_conversation(
+                        symptoms, st.session_state.conversation)
 
-                # Display the messages using our helper functions
-                display_chat_message(
-                    f"I have these symptoms: {', '.join(symptoms)}",
-                    is_user=True)
-                display_chat_message(ai_response, is_user=False)
+                    # Display the messages using our helper functions
+                    display_chat_message(
+                        f"I have these symptoms: {', '.join(symptoms)}",
+                        is_user=True)
+                    display_chat_message(ai_response, is_user=False)
 
-                # Store this interaction
-                st.session_state.conversation.append({
-                    "role":
-                    "user",
-                    "parts": [f"I have these symptoms: {', '.join(symptoms)}"]
-                })
-                st.session_state.conversation.append({
-                    "role": "model",
-                    "parts": [ai_response]
-                })
+                    # Store this interaction
+                    st.session_state.conversation.append({
+                        "role":
+                        "user",
+                        "parts": [f"I have these symptoms: {', '.join(symptoms)}"]
+                    })
+                    st.session_state.conversation.append({
+                        "role": "model",
+                        "parts": [ai_response]
+                    })
+
+                except Exception as e:
+                    st.error(f"Error in chatbot: {str(e)}")
+                    st.write(f"Debug: Chatbot error - {str(e)}")
+                    return
 
                 # Allow follow-up questions with improved styling
                 st.markdown('<div style="margin-top: 1rem;">',
@@ -447,31 +443,44 @@ def display_results(analysis, symptoms):
 
                 if follow_up:
                     with st.spinner("Getting response..."):
-                        # Display the user message
-                        display_chat_message(follow_up, is_user=True)
+                        try:
+                            # Display the user message
+                            display_chat_message(follow_up, is_user=True)
 
-                        # Add this question to the conversation
-                        st.session_state.conversation.append({
-                            "role":
-                            "user",
-                            "parts": [follow_up]
-                        })
+                            # Add this question to the conversation
+                            st.session_state.conversation.append({
+                                "role":
+                                "user",
+                                "parts": [follow_up]
+                            })
 
-                        # Get AI response
-                        response = get_symptom_conversation(
-                            symptoms, st.session_state.conversation)
+                            # Get AI response
+                            response = get_symptom_conversation(
+                                symptoms, st.session_state.conversation)
 
-                        # Display AI response
-                        display_chat_message(response, is_user=False)
+                            # Display AI response
+                            display_chat_message(response, is_user=False)
 
-                        # Store response
-                        st.session_state.conversation.append({
-                            "role":
-                            "model",
-                            "parts": [response]
-                        })
+                            # Store response
+                            st.session_state.conversation.append({
+                                "role":
+                                "model",
+                                "parts": [response]
+                            })
+
+                        except Exception as e:
+                            st.error(f"Error processing follow-up question: {str(e)}")
+                            st.write(f"Debug: Follow-up error - {str(e)}")
+
+            else:
+                st.warning("Please provide symptoms to chat with the AI assistant.")
 
             st.markdown('</div>', unsafe_allow_html=True)
+
+        else:
+            st.warning(
+                "💬 Symptom Assistant is not available - Google API Key not provided or invalid."
+            )
 
         # Store analysis in session state for report generation
         if 'current_analysis' not in st.session_state:
