@@ -18,8 +18,8 @@ from utils.ui_helpers import (local_css, display_header,
 # Import report generator
 from utils.report_generator import generate_html_report, generate_pdf_report, generate_qr_code
 
-# Replace with your actual valid API key
-GOOGLE_API_KEY = "your_actual_api_key"
+# Replace with your new valid API key after enabling the required API
+GOOGLE_API_KEY = ""
 
 if GOOGLE_API_KEY:
     from utils.gemini_helper import analyze_symptoms, get_symptom_conversation
@@ -421,7 +421,8 @@ def display_results(analysis, symptoms):
                     st.session_state.conversation.append({
                         "role":
                         "user",
-                        "parts": [f"I have these symptoms: {', '.join(symptoms)}"]
+                        "parts":
+                        [f"I have these symptoms: {', '.join(symptoms)}"]
                     })
                     st.session_state.conversation.append({
                         "role": "model",
@@ -469,11 +470,14 @@ def display_results(analysis, symptoms):
                             })
 
                         except Exception as e:
-                            st.error(f"Error processing follow-up question: {str(e)}")
+                            st.error(
+                                f"Error processing follow-up question: {str(e)}"
+                            )
                             st.write(f"Debug: Follow-up error - {str(e)}")
 
             else:
-                st.warning("Please provide symptoms to chat with the AI assistant.")
+                st.warning(
+                    "Please provide symptoms to chat with the AI assistant.")
 
             st.markdown('</div>', unsafe_allow_html=True)
 
