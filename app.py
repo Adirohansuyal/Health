@@ -19,7 +19,7 @@ from utils.ui_helpers import (local_css, display_header,
 from utils.report_generator import generate_html_report, generate_pdf_report, generate_qr_code
 
 # Replace with your new valid API key after enabling the required API
-GOOGLE_API_KEY = ""
+GOOGLE_API_KEY = "AIzaSyCrjgJviN3ve3MnY8cjd6h2GXGS4Yp-Sp4"
 
 if GOOGLE_API_KEY:
     from utils.gemini_helper import analyze_symptoms, get_symptom_conversation
